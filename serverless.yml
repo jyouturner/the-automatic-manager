@@ -1,0 +1,114 @@
+service: the-automatic-manager
+frameworkVersion: ">=2.24.0"
+useDotenv: true
+
+provider:
+  #lambdaHashingVersion: 20201221
+  name: aws
+  runtime: go1.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
+  memorySize: 128
+  timeout: 30
+  environment:
+    LOG_LEVEL: DEBUG
+  stackTags:
+    env: ${opt:stage, self:provider.stage}
+    managed: Serverless Framework
+    project: ${self:service}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::tam-org-*/*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::tam-org-*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:OAUTH_NOUNCE_BUCKET}/*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:OAUTH_NOUNCE_BUCKET}"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+            # the last part of secret ARN is the secret name plus some random value
+          Resource: "arn:aws:secretsmanager:${self:provider.region}:${aws:accountId}:secret:${env:AWS_SECRET_NAME}*"
+
+package:
+  exclude:
+    - ./**
+  include:
+    - ./bin/lambda/**
+
+functions:
+  oauth-authorizor-google:
+    handler: bin/lambda/authorization
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      OAUTH_PROVIDER: GOOGLE
+      OAUTH_NOUNCE_BUCKET: ${env:OAUTH_NOUNCE_BUCKET}
+      AUTHORIZED_TO_URL: ${env:GOOGLE_AUTHORIZED_TO_URL}
+    events:
+      - http:
+          path: google
+          method: post
+  
+  oauth-authorizor-atlanssian:
+    handler: bin/lambda/authorization
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      OAUTH_PROVIDER: ATLANSSIAN
+      OAUTH_NOUNCE_BUCKET: ${env:OAUTH_NOUNCE_BUCKET}
+      AUTHORIZED_TO_URL: ${env:ATLANSSIAN_AUTHORIZED_TO_URL}
+    events:
+      - http:
+          path: atlanssian
+          method: post
+
+  oauth-authorized:
+    handler: bin/lambda/authorized
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      OAUTH_NOUNCE_BUCKET: ${env:OAUTH_NOUNCE_BUCKET}
+    events:
+      - http:
+          path: authorized
+          method: get
+
+  notion-monitor:
+    handler: bin/lambda/notion_monitor
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      # LOG_LEVEL: ${env:LOG_LEVEL}
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: false
+
+  calendar-monitor:
+    handler: bin/lambda/calendar_monitor
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      # LOG_LEVEL: ${env:LOG_LEVEL}
+    events:
+      - schedule:
+          rate: rate(10 minutes)
+          enabled: false
+
+  jira-monitor:
+    handler: bin/lambda/jira_monitor
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      # LOG_LEVEL: ${env:LOG_LEVEL}
+    events:
+      - schedule:
+          rate: rate(30 minutes)
+          enabled: false

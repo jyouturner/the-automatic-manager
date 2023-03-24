@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: the-automatic-manager-web-config
+data:
+  dot.env: |
+    LOG_LEVEL:DEBUG
+    NOTION_DATABASE_ID=
+    GOOGLE_TOKEN_S3_BUCKET=
+    GOOGLE_TOKEN_S3_FILE=storage/token/google/token.json
+    GOOGLE_OAUTH2_AUTH_URL=https://accounts.google.com/o/oauth2/auth
+    GOOGLE_OAUTH2_TOKEN_URL=https://oauth2.googleapis.com/token
+    GOOGLE_OAUTH2_REDIRECT_URL=urn:ietf:wg:oauth:2.0:oob
+    GROUP_EMAIL_LIST=

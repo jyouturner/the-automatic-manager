@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: the-automatic-manager-web
+  namespace: the-automatic-manager
+  labels:
+    app: the-automatic-manager-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: the-automatic-manager-web
+  template:
+    metadata:
+      labels:
+        app: the-automatic-manager-web
+    spec:
+      containers:
+        - name: the-automatic-manager-web
+          image: ....dkr.ecr.us-west-2.amazonaws.com/the-automatic-manager:0.0.6
+          imagePullPolicy: Always
+          command:
+            - /opt/the-automatic-manager/web_server_linux
+          env:
+            - name: REDIS_URL
+              value: redis-master:6379
+            - name: GOOGLE_OAUTH2_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: GOOGLE_OAUTH2_CLIENT_ID
+            - name: GOOGLE_OAUTH2_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: GOOGLE_OAUTH2_CLIENT_SECRET
+            - name: ATLASSIAN_OAUTH2_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: ATLASSIAN_OAUTH2_CLIENT_ID
+            - name: ATLASSIAN_OAUTH2_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: ATLASSIAN_OAUTH2_CLIENT_SECRET
+            - name: ATLASSIAN_JIRA_BASIC_AUTH_USER
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: ATLASSIAN_JIRA_BASIC_AUTH_USER
+            - name: ATLASSIAN_JIRA_BASIC_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: ATLASSIAN_JIRA_BASIC_AUTH_TOKEN
+            - name: NOTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: oauth
+                  key: NOTION_KEY
+          volumeMounts:
+            - name: config
+              mountPath: /opt/the-automatic-manager/.env
+              subPath: .env
+      volumes:
+        - name: config
+          configMap:
+            name: the-automatic-manager-web-config
+            items:
+            - key: "dot.env"
+              path: ".env"
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 600
+

@@ -1,0 +1,6 @@
+.env
+.env.*
+integrationtesting/testdata/*
+bin/*
+.serverless/*
+node_modules/*

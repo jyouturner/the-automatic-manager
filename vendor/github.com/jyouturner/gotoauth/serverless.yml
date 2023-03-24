@@ -1,0 +1,76 @@
+service: go-to-auth
+frameworkVersion: ">=2.24.0"
+useDotenv: true
+
+plugins:
+  - serverless-pseudo-parameters
+provider:
+  name: aws
+  runtime: go1.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
+  memorySize: 128
+  timeout: 30
+  environment:
+    LOG_LEVEL: DEBUG
+  stackTags:
+    env: ${opt:stage, self:provider.stage}
+    managed: Serverless Framework
+    project: ${self:service}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:ACCESS_TOKEN_BUCKET}/*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:ACCESS_TOKEN_BUCKET}"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:OAUTH_NOUNCE_BUCKET}/*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::${env:OAUTH_NOUNCE_BUCKET}"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+            # the last part of secret ARN is the secret name plus some random value
+          Resource: "arn:aws:secretsmanager:${self:provider.region}:#{AWS::AccountId}:secret:${env:AWS_SECRET_NAME}*"
+
+package:
+  exclude:
+    - ./**
+  include:
+    - ./bin/lambda/**
+
+functions:
+  oauth-authorizor-google:
+    handler: bin/lambda/authorization
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      ACCESS_TOKEN_BUCKET: ${env:ACCESS_TOKEN_BUCKET}
+      OAUTH_NOUNCE_BUCKET: ${env:OAUTH_NOUNCE_BUCKET}
+      OAUTH_PROVIDER: GOOGLE
+      SCOPE: ${env:GOOGLE_SCOPE}
+      AUTHORIZED_TO_URL: ${env:GOOGLE_AUTHORIZED_TO_URL}
+    events:
+      - http:
+          path: authorize
+          method: post
+  oauth-authorized-google:
+    handler: bin/lambda/authorized
+    environment:
+      AWS_SECRET_NAME: ${env:AWS_SECRET_NAME}
+      ACCESS_TOKEN_BUCKET: ${env:ACCESS_TOKEN_BUCKET}
+      OAUTH_NOUNCE_BUCKET: ${env:OAUTH_NOUNCE_BUCKET}
+    events:
+      - http:
+          path: authorized
+          method: get
+  

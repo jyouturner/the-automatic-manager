@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: the-automatic-manager-calendar-monitor-config
+data:
+  dot.env: |
+    AWS_SECRET_NAME: "prod/automaticmanager/keys"
+    AWS_SECRET_REGION: us-east-2
+    NOTION_DATABASE_ID=
+    GOOGLE_TOKEN_S3_BUCKET=
+    GOOGLE_TOKEN_S3_FILE=storage/token/google/token.json
+    GOOGLE_OAUTH2_AUTH_URL=https://accounts.google.com/o/oauth2/auth
+    GOOGLE_OAUTH2_TOKEN_URL=https://oauth2.googleapis.com/token
+    GOOGLE_OAUTH2_REDIRECT_URL=urn:ietf:wg:oauth:2.0:oob
+    GROUP_EMAIL_LIST=

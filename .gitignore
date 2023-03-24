@@ -1,0 +1,17 @@
+.history/*
+.history/
+*secret*.*
+token.json
+.env
+googletoken.json
+.serverless/
+bin/*
+node_modules/
+node_modules/*
+*.sqlite
+*/.DS_Store
+.DS_Store
+config/*
+environments/testdata/*
+integrationtesting/testdata/*
+**/testdata/*

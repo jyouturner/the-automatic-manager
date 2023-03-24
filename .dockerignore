@@ -1,0 +1,9 @@
+.git/
+.history
+.env
+node_modules/
+integrationtesting/
+k8s/
+config/
+.serverless.yml
+.serverless/
